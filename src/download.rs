@@ -1052,7 +1052,8 @@ impl RangeReader {
             let mut url = if use_getfile_api {
                 format!("{}/getfile/{}/{}", io_url, access_key, bucket)
             } else {
-                io_url.to_owned()
+                //io_url.to_owned()
+                format!("{}/{}/", io_url, bucket)
             };
             if normalize_key {
                 if url.ends_with('/') && key.starts_with('/') {
@@ -1975,6 +1976,32 @@ mod tests {
                 Err(err)
             }
         })?;
+        Ok(())
+    }
+
+    #[test]
+    fn test_download_file_minio() -> Result<(), Box<dyn Error>> {
+        use std::io::{
+            Cursor as IOCursor
+        };
+        use crate::ConfigBuilder;
+        env_logger::try_init().ok();
+
+        let config = ConfigBuilder::new("minio", "minio1024", "test1",
+                                        Some(vec!["http://10.10.192.1:9000".into(), "http://10.10.192.2:9000".into(), "http://10.10.192.3:9000".into()]));
+        let ranges = vec![(0, 1024)];
+        let buf: Vec<u8> = vec![0; 1024];
+        let mut pos_list = vec![];
+
+        let reader = RangeReader::from_config("64.png", &config.build());
+        let parts = reader.read_multi_ranges(&ranges)?;
+        let mut cursor = IOCursor::new(buf);
+        for part in parts.iter() {
+            let (from, len) = part.range;
+            println!("{}", len);
+            pos_list.push((from << 24 | len, cursor.position()));
+            cursor.write_all(&part.data).ok();
+        }
         Ok(())
     }
 }
