@@ -39,8 +39,8 @@ pub use req_id::{set_download_start_time, total_download_duration};
 fn cache_dir_path_of(path: impl AsRef<Path>) -> IOResult<PathBuf> {
     static CACHE_DIR: Lazy<PathBuf> = Lazy::new(|| {
         BaseDirs::new()
-            .map(|dir| dir.cache_dir().join("qiniu-download"))
-            .unwrap_or_else(|| temp_dir().join("qiniu-download"))
+            .map(|dir| dir.cache_dir().join("minerfast-download"))
+            .unwrap_or_else(|| temp_dir().join("minerfast-download"))
     });
 
     if !CACHE_DIR.exists() {

@@ -1,13 +1,13 @@
 [package]
-name = "qiniu-download"
+name = "minerfast-download"
 version = "1.0.9"
-description = "Qiniu Resource (Cloud) Download SDK for Rust."
-authors = ["Bachue Zhou <zhourong@qiniu.com>", "longbai <baishunlong@qiniu.com>", "qiniusdk <sdk@qiniu.com>"]
-documentation = "https://docs.rs/qiniu-download"
-repository = "https://github.com/qiniu/rust-download-sdk"
+description = "minerfast Download SDK for Rust."
+authors = []
+documentation = ""
+repository = "https://github.com/minerscan/rust-download-sdk"
 readme = "README.md"
 edition = "2018"
-keywords = ["qiniu", "storage", "sdk", "cloud"]
+keywords = ["minerfast", "storage", "sdk", "cloud"]
 license = "MIT"
 
 [dependencies]

@@ -51,7 +51,7 @@ static QINIU_CONFIG: Lazy<RwLock<Option<Config>>> = Lazy::new(|| {
             if let Some(config) = load_config() {
                 *QINIU_CONFIG.write().unwrap() = Some(config);
             }
-            info!("QINIU_CONFIG reloaded: {:?}", QINIU_CONFIG);
+            info!("MINERFAST_CONFIG reloaded: {:?}", QINIU_CONFIG);
         })
     })
 });
@@ -87,7 +87,7 @@ fn build_http_client() -> HTTPClient {
             }
         }
     }
-    let user_agent = format!("QiniuRustDownload/{}", env!("CARGO_PKG_VERSION"));
+    let user_agent = format!("MinerfastRustDownload/{}", env!("CARGO_PKG_VERSION"));
     HTTPClient::builder()
         .user_agent(user_agent)
         .connect_timeout(Duration::from_millis(dial_timeout_ms))
@@ -99,9 +99,14 @@ fn build_http_client() -> HTTPClient {
 }
 
 const QINIU_ENV: &str = "QINIU";
+const MINERFAST_ENV : &str = "MINERFAST";
 
 fn load_config() -> Option<Config> {
-    if let Ok(qiniu_config_path) = env::var(QINIU_ENV) {
+    let mut config_path = env::var(MINERFAST_ENV);
+    if !config_path.is_ok() {
+        config_path = env::var(QINIU_ENV);
+    }
+    if let Ok(qiniu_config_path) = config_path {
         if let Ok(qiniu_config) = fs::read(&qiniu_config_path) {
             let qiniu_config: Option<Config> = if qiniu_config_path.ends_with(".toml") {
                 toml::from_slice(&qiniu_config).ok()
@@ -113,17 +118,17 @@ fn load_config() -> Option<Config> {
                 return Some(qiniu_config);
             } else {
                 error!(
-                    "Qiniu config file cannot be deserialized: {}",
+                    "MINERFAST config file cannot be deserialized: {}",
                     qiniu_config_path
                 );
                 return None;
             }
         } else {
-            error!("Qiniu config file cannot be open: {}", qiniu_config_path);
+            error!("MINERFAST config file cannot be open: {}", qiniu_config_path);
             return None;
         }
     } else {
-        warn!("QINIU Env IS NOT ENABLED");
+        warn!("MINERFAST Env IS NOT ENABLED");
         return None;
     }
 
@@ -137,15 +142,15 @@ fn load_config() -> Option<Config> {
 
         if let Err(err) = UNIQUE_THREAD.get_or_try_init(|| {
             ThreadBuilder::new()
-                .name("qiniu-config-watcher".into())
+                .name("minerfast-config-watcher".into())
                 .spawn(move || {
                     if let Err(err) = setup_config_watcher_inner(&config_path) {
-                        error!("Qiniu config file watcher was setup failed: {:?}", err);
+                        error!("minerfast config file watcher was setup failed: {:?}", err);
                     }
                 })
         }) {
             error!(
-                "Failed to start thread to watch Qiniu config file: {:?}",
+                "Failed to start thread to watch minerfast config file: {:?}",
                 err
             );
         }
@@ -160,7 +165,7 @@ fn load_config() -> Option<Config> {
                 RecursiveMode::NonRecursive,
             )?;
 
-            info!("Qiniu config file watcher was setup");
+            info!("minerfast config file watcher was setup");
 
             loop {
                 match rx.recv() {
@@ -173,7 +178,7 @@ fn load_config() -> Option<Config> {
                         }
                         DebouncedEvent::Error(err, _) => {
                             error!(
-                                "Received error event from Qiniu config file watcher: {:?}",
+                                "Received error event from minerfast config file watcher: {:?}",
                                 err
                             );
                         }
@@ -181,7 +186,7 @@ fn load_config() -> Option<Config> {
                     },
                     Err(err) => {
                         error!(
-                            "Failed to receive event from Qiniu config file watcher: {:?}",
+                            "Failed to receive event from minerfast config file watcher: {:?}",
                             err
                         );
                     }
@@ -190,7 +195,7 @@ fn load_config() -> Option<Config> {
         }
 
         fn event_received(event: DebouncedEvent) {
-            info!("Received event {:?} from Qiniu config file watcher", event);
+            info!("Received event {:?} from minerfast config file watcher", event);
             for handle in CONFIG_UPDATE_HANDLERS.read().unwrap().iter() {
                 handle();
             }
